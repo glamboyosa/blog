@@ -1,0 +1,141 @@
+---
+title: "Animating SVGs with Framer Motion - a TO loading SVG Case Study"
+description: "Learn how I animated my loading state SVG"
+pubDate: "Jul 31 2023"
+heroImage: "/little-moon-man.jpg"
+---
+
+import Divider from "../../components/Divider.astro";
+import Image from "../../components/Image.astro";
+import Link from "../../components/ExternalLink.astro";
+import Heading from "../../components/Heading.astro";
+
+ICYMI, I launched <Link href="https://to.glamboyosa.xyz">TO</Link>, a tool to upscale low quality images with AI. In the app, I wanted a fun experience and this included the loading UI. Why? I firmly believe a fun loading experience is key, especially when there might be a long wait time.
+
+<Divider />
+
+Here's what it looks like:
+
+<Image src="/to-loading.gif" alt="the TO website loading animation" />
+
+The cool thing though, it was just a static SVG from <Link href="https://popsy.co">Popsy.co</Link>. So the big question is, how do we move from a static SVG to an animated one ? We need to learn about an SVG element – Paths
+
+<Divider />
+
+<Heading>SVG Paths</Heading>
+
+Paths make intricate shapes by joining several straight or curved lines. It can be used to create lines, curves, arcs, and more!
+
+A `path` element's shape is defined by its parameter called `d`. The `d` attribute contains a series of commands and their parameters.
+
+<Divider />
+<Heading>Understanding the loading animation</Heading>
+
+Now that we have a basic grasp of paths, I can now explain how the SVG is animated. Basically, we animate the SVG's `path` property via some attributes. This results in the SVG being "drawn". This is where <Link href="https://www.framer.com/motion/">Framer Motion</Link> comes into play. It is a library that makes writing declarative animations a breeze. With Framer, we are easily able to animate the path with very few LOC.
+
+<Divider />
+<Heading>Convert SVG & Path to Motion Element</Heading>
+
+The first step is to convert the SVG and specifically it's path property to a Motion element so we can apply Framer Motion specific props.
+
+From this:
+
+<br />
+```tsx
+<svg
+  width="500"
+  height="500"
+  viewBox="0 0 960 960"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <path
+    d="M578.092 588.415C567.519 579.937 553.128 577.096 539.714 578.961C527.945 580.595 516.9 585.553 505.314 588.229C493.728 590.905 480.559 590.929 471.114 583.699"
+    stroke={`${theme === "light" ? "#171717" : "#fff"}`}
+    stroke-width="3.291"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    strokeWidth={3}
+  />
+</svg>
+```
+
+<br />
+To this:
+<br />
+```tsx
+<motion.svg
+  width="500"
+  height="500"
+  viewBox="0 0 960 960"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <motion.path
+    d="M578.092 588.415C567.519 579.937 553.128 577.096 539.714 578.961C527.945 580.595 516.9 585.553 505.314 588.229C493.728 590.905 480.559 590.929 471.114 583.699"
+    stroke={`${theme === "light" ? "#171717" : "#fff"}`}
+    stroke-width="3.291"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    strokeWidth={3}
+  />
+</motion.svg>
+```
+<br />
+
+> **NOTE** For the purpose of this article we only use the SVG and it's `path` property.
+
+<Divider />
+
+<Heading> Adding Motion Properties </Heading>
+
+Framer Motion provides a `pathLength` property that goes from 0-1.
+So it basically draws it from invisible to visible along it's curves. Here's what the final output looks like:
+
+```tsx
+<motion.svg
+  width="500"
+  height="500"
+  viewBox="0 0 960 960"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <motion.path
+    d="M578.092 588.415C567.519 579.937 553.128 577.096 539.714 578.961C527.945 580.595 516.9 585.553 505.314 588.229C493.728 590.905 480.559 590.929 471.114 583.699"
+    stroke={`${theme === "light" ? "#171717" : "#fff"}`}
+    stroke-width="3.291"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    initial={{ pathLength: 0 }}
+    animate={{ pathLength: 1 }}
+    transition={{
+      duration: 0.75,
+      ease: "easeInOut",
+      repeat: Infinity,
+      repeatType: "loop",
+      repeatDelay: 0.2,
+    }}
+    strokeWidth={3}
+  />
+</motion.svg>
+```
+
+<br />
+
+Here, we have `initial` and `animate` props and we basically say when the SVG enters the DOM have the path not be drawn (almost not exist) and then draw it.
+
+We also use the `transition` prop which is similar to the CSS transition prop. The most important thing here about this is `repeat:Infinity` which ensures the animation goes from 0-1 indefintely (until the image is finished processing within the context of the app).
+
+<Divider />
+
+<Heading>Conclusion</Heading>
+
+We've learnt how to animate SVGs to draw paths but that's just one of the cool
+things you can do with SVGs and Framer. I'd recommend this article by
+
+<Link href="https://blog.noelcserepy.com/how-to-animate-svg-paths-with-framer-motion">Noël Cserépy</Link> if you want to learn more in-depth. I would also recommend <Link href="https://buildui.com">
+  Build UI
+</Link> by Sam Selikoff and Ryan Toronto, it helped me massively use Framer Motion.
+<br />
+
+> Image gotten from <Link href="https://unsplash.com/@kobbymendez">Unsplash</Link>

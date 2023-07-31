@@ -20,7 +20,7 @@ const posts = (await getCollection("blog")).sort(
     <main>
       <h1 class="text-2xl mt-4 mb-3 text-center">Osa's Knowledge Base 🚀</h1>
       <div
-        class="flex gap-4 mt-10 mb-24 overflow-x-auto snap-x snap-mandatory scroll-smooth"
+        class="flex gap-5 mt-10 mb-24 overflow-x-auto snap-x snap-mandatory scroll-smooth"
       >
         {
           posts.map((post) => (
@@ -29,14 +29,12 @@ const posts = (await getCollection("blog")).sort(
               class="snap-start p-2  flex flex-none items-center flex-col gap-4"
             >
               <img
-                class="rounded-lg"
-                width={512}
-                height={360}
+                class="transition my-10 duration-700 ease-in-out rounded-lg w-[400px]  h-[400px] first:ml-16 hover:origin-bottom hover:-rotate-12"
                 src={post.data.heroImage}
                 alt=""
               />
-              <h4 class="title">{post.data.title}</h4>
-              <p class="date">
+              <h4>{post.data.title}</h4>
+              <p>
                 <FormattedDate date={post.data.pubDate} />
               </p>
             </a>
