@@ -15,7 +15,7 @@ Some work is slow. Some work can fail. Some work should happen later. Sending em
 
 These tasks are usually handled by a background job system.
 
-In this article, we will use a Go project called **Swig** as a practical example of how a PostgreSQL-backed job queue can work.
+In this article, we will use a Go project called <Link href="https://github.com/glamboyosa/swig">**Swig**</Link> as a practical example of how a PostgreSQL-backed job queue can work.
 
 The goal is not only to understand Swig. The goal is also to learn Go concepts that show up in real backend systems:
 
@@ -571,7 +571,7 @@ A PostgreSQL-backed queue is not the right answer for every system. If you need 
 
 But for many Go applications, PostgreSQL is already there.
 
-Swig shows how far you can get with a small Go API and a few PostgreSQL features:
+<Link href="https://swig.glamboyosa.xyz">Swig</Link> shows how far you can get with a small Go API and a few PostgreSQL features:
 
 - Store jobs in a table.
 - Claim jobs with `FOR UPDATE SKIP LOCKED`.
