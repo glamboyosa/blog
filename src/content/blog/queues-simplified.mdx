@@ -41,7 +41,7 @@ with Arrays using the built in methods.{" "}
 
 Let's implement a queue class with the `enqueue` and `dequeue` methods.
 
-```JavaScript
+```javascript
 class Queue {
   constructor() {
     this.items = [];
@@ -172,7 +172,7 @@ We have a `script` tag and within it, an empty array which will act as our queue
 
 The first step is to enqueue our boxes. Copy the following code:
 
-```JavaScript
+```javascript
         main.addEventListener("click", (e) => {
         const box = e.target;
         if (box.tagName === "DIV" && box.classList.contains("box")) {
@@ -198,7 +198,7 @@ If it is, we enqueue it via the `push` method, add the green class (this just se
 Now, it's time for the magic. We want to deselect the boxes once we've selected them all.
 For this, paste the following code underneath `boxes.push(box)`
 
-```JavaScript
+```javascript
  // we've filled in everything
           if (boxes.length === 9) {
             // every 300 ms remove in order it was entered in
