@@ -1,6 +1,6 @@
 ---
 title: "How to Build a PostgreSQL Backed Job Queue in Go"
-description: "Learn how Go and PostgreSQL power a production-grade background job queue — covering goroutines, contexts, row locks, LISTEN/NOTIFY, and advisory locks."
+description: "Learn how Go and PostgreSQL power a production-grade background job queue, covering goroutines, contexts, row locks, LISTEN/NOTIFY, and advisory locks."
 pubDate: "May 31 2026"
 heroImage: "/blog-placeholder-2.jpg"
 ---
@@ -153,7 +153,7 @@ Each row is one job. The important columns are:
 - `locked_at`: when the job was claimed
 - `last_error`: the last error returned by the worker
 
-**The table is the source of truth.** PostgreSQL notifications can wake workers, but notifications are not the durable queue — the rows in `swig_jobs` are.
+**The table is the source of truth.** PostgreSQL notifications can wake workers, but notifications are not the durable queue. The rows in `swig_jobs` are.
 
 <Divider />
 
@@ -202,7 +202,7 @@ type Worker interface {
 }
 ```
 
-If a type has those methods, it satisfies the interface — no explicit declaration required.
+If a type has those methods, it satisfies the interface with no explicit declaration required.
 
 This is one of the reasons interfaces are so useful in Go. They let you design around behavior instead of inheritance.
 
@@ -219,7 +219,7 @@ registry.RegisterWorker(&EmailWorker{})
 
 Later, when a job row says `kind = 'send_email'`, Swig can look up the registered worker and run it.
 
-There is a subtle concurrency issue here. If the registry stored the exact `&EmailWorker{}` pointer and reused it for every job, multiple goroutines could unmarshal payloads into the same Go value at the same time — shared mutable state, which is where many concurrency bugs come from.
+There is a subtle concurrency issue here. If the registry stored the exact `&EmailWorker{}` pointer and reused it for every job, multiple goroutines could unmarshal payloads into the same Go value at the same time. Shared mutable state is where many concurrency bugs come from.
 
 Swig avoids this with a factory approach internally. Registration captures the worker type, and each claimed job gets a fresh worker instance before JSON is unmarshaled.
 
@@ -305,7 +305,7 @@ Most Swig methods accept `context.Context`:
 func (s *Swig) AddJob(ctx context.Context, worker interface{}) error
 ```
 
-Contexts are used for cancellation, timeouts, and deadlines. That matters in a job queue because many operations can block — database queries, waiting for notifications, processing long jobs, graceful shutdown.
+Contexts are used for cancellation, timeouts, and deadlines. That matters in a job queue because many operations can block: database queries, waiting for notifications, processing long jobs, graceful shutdown.
 
 For example, you can create a timeout:
 
@@ -324,7 +324,7 @@ Swig uses contexts for worker lifecycles too. When `Stop` is called, Swig cancel
 
 <Heading>The Hard Part: Multiple Workers</Heading>
 
-A queue gets interesting when many workers run at the same time. Imagine three workers all asking PostgreSQL for the next pending job — we do not want all three to process the same job.
+A queue gets interesting when many workers run at the same time. Imagine three workers all asking PostgreSQL for the next pending job. We do not want all three to process the same job.
 
 A naive approach might be:
 
@@ -351,7 +351,7 @@ This is perfect for a queue:
 
 No central coordinator is needed.
 
-A helpful Go analogy is `sync.Mutex`. A Go mutex protects shared memory inside one process. PostgreSQL row locks protect shared rows across many transactions, processes, and machines. `SKIP LOCKED` plays the same coordination role — at the database level.
+A helpful Go analogy is `sync.Mutex`. A Go mutex protects shared memory inside one process. PostgreSQL row locks protect shared rows across many transactions, processes, and machines. `SKIP LOCKED` plays the same coordination role, but at the database level.
 
 ### Atomic Job Claiming
 
@@ -376,7 +376,7 @@ WHERE id = (
 RETURNING id, kind, payload;
 ```
 
-This query does several things at once: finds a pending job, skips already-locked jobs, marks it as processing, records which worker claimed it, and returns the job data. The selection and state change happen atomically — workers never do a separate `SELECT` and hope the later `UPDATE` is still safe.
+This query does several things at once: finds a pending job, skips already-locked jobs, marks it as processing, records which worker claimed it, and returns the job data. The selection and state change happen atomically. Workers never do a separate `SELECT` and hope the later `UPDATE` is still safe.
 
 <Divider />
 
@@ -392,7 +392,7 @@ for i := 0; i < maxWorkers; i++ {
 
 Each worker runs independently. PostgreSQL coordinates which job each worker gets.
 
-This is a nice division of responsibility: Go handles concurrency with goroutines, while PostgreSQL handles safe job claiming with locks. This is one of the reasons Go works well for background processing — you can express concurrency directly, while still relying on the database for cross-process coordination.
+This is a nice division of responsibility: Go handles concurrency with goroutines, while PostgreSQL handles safe job claiming with locks. This is one of the reasons Go works well for background processing: you can express concurrency directly, while still relying on the database for cross-process coordination.
 
 ### WaitGroup and Graceful Shutdown
 
@@ -412,7 +412,7 @@ wg.Wait()
 
 Swig uses a WaitGroup to track active worker goroutines. When `Stop` is called, Swig cancels worker contexts, closes the shutdown signal, waits for workers, cleans up jobs owned by the instance, and releases leader resources.
 
-Swig also uses `sync.Once` to make shutdown idempotent. Calling `Stop` more than once should not panic because of a double channel close — shutdown paths are often where production systems behave differently from happy-path demos.
+Swig also uses `sync.Once` to make shutdown idempotent. Calling `Stop` more than once should not panic because of a double channel close. Shutdown paths are often where production systems behave differently from happy-path demos.
 
 <Divider />
 
@@ -445,7 +445,7 @@ Workers sleep when there is no work and wake when a new job arrives.
 
 But there is an important PostgreSQL detail: **`LISTEN` is session-scoped**. A worker must wait for notifications on the same database session that executed `LISTEN`. If `LISTEN` happens on one pooled connection but `WaitForNotification` happens on another, the worker may never receive the notification.
 
-Swig handles this by creating a dedicated listener for each worker. The listener owns one database session — that same session runs `LISTEN`, waits for notifications, and gets closed during shutdown.
+Swig handles this by creating a dedicated listener for each worker. The listener owns one database session; that same session runs `LISTEN`, waits for notifications, and gets closed during shutdown.
 
 This is a great example of a backend engineering lesson: abstractions like connection pools are useful, but some database features still depend on the lifecycle of a specific connection.
 
@@ -469,7 +469,7 @@ If the result is true, that Swig instance becomes the leader. Advisory locks are
 
 But advisory locks are also **session-scoped**. If the session ends, PostgreSQL releases the lock. Swig uses a dedicated advisory-lock connection for leadership. When Swig shuts down, it releases the lock from the same session that acquired it.
 
-If an instance does not become leader, it keeps retrying. If the current leader dies and PostgreSQL releases the lock, another Swig instance can acquire leadership — simple failover without ZooKeeper, etcd, or a separate coordinator.
+If an instance does not become leader, it keeps retrying. If the current leader dies and PostgreSQL releases the lock, another Swig instance can acquire leadership. Simple failover without ZooKeeper, etcd, or a separate coordinator.
 
 <Divider />
 
@@ -497,7 +497,7 @@ The driver interface hides the concrete database library from the queue logic. T
 - Can you create a listener?
 - Can you try to acquire an advisory lock?
 
-This is a common Go design: define the behavior your core package needs, write small adapters for concrete dependencies, and keep the core logic independent. Interfaces are especially useful at boundaries — database drivers, HTTP clients, storage backends, and queues are all good places to use them.
+This is a common Go design: define the behavior your core package needs, write small adapters for concrete dependencies, and keep the core logic independent. Interfaces are especially useful at boundaries: database drivers, HTTP clients, storage backends, and queues are all good places to use them.
 
 <Divider />
 
@@ -537,7 +537,7 @@ Swig prevents multiple workers from claiming the same pending job at the same ti
 
 The safer language is: **Swig provides atomic claiming and at-least-once processing.**
 
-Because jobs can be retried, workers should be idempotent — running the same operation more than once has the same result as running it once. For example, an email job could use an idempotency key so the email provider does not send duplicates.
+Because jobs can be retried, workers should be idempotent. Running the same operation more than once should have the same result as running it once. For example, an email job could use an idempotency key so the email provider does not send duplicates.
 
 This is one of the most important lessons in queue design. The queue can reduce duplicate processing, but workers still need to handle retries safely.
 
