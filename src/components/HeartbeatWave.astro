@@ -1,0 +1,199 @@
+---
+---
+
+<div class="heartbeat-container" aria-hidden="true">
+  <div class="phase-labels">
+    <span class="phase-label systolic" id="systolic-label">Systolic</span>
+    <span class="phase-label diastolic" id="diastolic-label">Diastolic</span>
+  </div>
+  <div class="wave-wrapper">
+    <svg viewBox="0 0 600 120" class="wave-svg" xmlns="http://www.w3.org/2000/svg">
+      <!-- Moving clip window -->
+      <defs>
+        <linearGradient id="fade-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="white" stop-opacity="0" />
+          <stop offset="15%" stop-color="white" stop-opacity="1" />
+          <stop offset="85%" stop-color="white" stop-opacity="1" />
+          <stop offset="100%" stop-color="white" stop-opacity="0" />
+        </linearGradient>
+        <mask id="wave-mask">
+          <rect width="600" height="120" fill="url(#fade-gradient)" />
+        </mask>
+      </defs>
+
+      <!-- Heartbeat path (two cycles for seamless loop) -->
+      <g class="wave-track" mask="url(#wave-mask)">
+        <!-- Cycle 1 -->
+        <polyline
+          class="ecg-line"
+          points="
+            0,60
+            40,60
+            50,55
+            60,60
+            70,60
+            80,62
+            90,5
+            100,75
+            110,60
+            125,45
+            145,60
+            160,60
+            200,60
+            240,60
+            250,55
+            260,60
+            270,60
+            280,62
+            290,5
+            300,75
+            310,60
+            325,45
+            345,60
+            360,60
+            400,60
+            440,60
+            450,55
+            460,60
+            470,60
+            480,62
+            490,5
+            500,75
+            510,60
+            525,45
+            545,60
+            600,60
+          "
+        />
+      </g>
+
+      <!-- Vertical phase markers -->
+      <line class="phase-marker systolic-marker" x1="90" y1="10" x2="90" y2="80" />
+      <line class="phase-marker diastolic-marker" x1="200" y1="50" x2="200" y2="70" />
+    </svg>
+    <div class="scan-line"></div>
+  </div>
+  <div class="bp-readout">
+    <span class="bp-number systolic-bp">120</span>
+    <span class="bp-slash">/</span>
+    <span class="bp-number diastolic-bp">80</span>
+    <span class="bp-unit">mmHg</span>
+  </div>
+</div>
+
+<style>
+  .heartbeat-container {
+    background: #0f1117;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .wave-wrapper {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .wave-svg {
+    width: 100%;
+    height: auto;
+  }
+
+  .ecg-line {
+    fill: none;
+    stroke: #22c55e;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 4px #22c55e88);
+    animation: scroll-wave 2.8s linear infinite;
+  }
+
+  @keyframes scroll-wave {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-200px); }
+  }
+
+  .scan-line {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 2px;
+    height: 100%;
+    background: rgba(34, 197, 94, 0.4);
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+    pointer-events: none;
+  }
+
+  .phase-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    padding: 0 0.5rem;
+  }
+
+  .phase-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .phase-label.systolic {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    animation: pulse-label 2.8s ease-in-out infinite;
+  }
+
+  .phase-label.diastolic {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    animation: pulse-label 2.8s ease-in-out infinite 1.4s;
+  }
+
+  @keyframes pulse-label {
+    0%, 80%, 100% { opacity: 0.5; }
+    10%, 30% { opacity: 1; }
+  }
+
+  .phase-marker {
+    stroke-width: 1;
+    stroke-dasharray: 4 3;
+    opacity: 0.4;
+  }
+
+  .systolic-marker { stroke: #f87171; }
+  .diastolic-marker { stroke: #60a5fa; }
+
+  .bp-readout {
+    display: flex;
+    align-items: baseline;
+    gap: 0.25rem;
+    margin-top: 0.75rem;
+    justify-content: center;
+  }
+
+  .bp-number {
+    font-size: 1.75rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #f8fafc;
+  }
+
+  .bp-slash {
+    color: #64748b;
+    font-size: 1.5rem;
+  }
+
+  .bp-unit {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-left: 0.25rem;
+  }
+</style>

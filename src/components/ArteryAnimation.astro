@@ -1,0 +1,259 @@
+---
+---
+
+<div class="artery-card" aria-label="Animated artery cross-section showing blood flow and pressure">
+  <div class="artery-labels">
+    <div class="artery-label left">
+      <div class="label-dot systolic-dot"></div>
+      <div>
+        <div class="label-name">Systolic</div>
+        <div class="label-desc">Heart contracts → pressure spike</div>
+      </div>
+    </div>
+    <div class="artery-label right">
+      <div class="label-dot diastolic-dot"></div>
+      <div>
+        <div class="label-name">Diastolic</div>
+        <div class="label-desc">Heart relaxes → pressure drops</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="artery-scene">
+    <!-- Pressure wave indicator -->
+    <div class="pressure-wave"></div>
+
+    <!-- Artery tube -->
+    <div class="artery-tube">
+      <!-- Wall top -->
+      <div class="artery-wall top-wall"></div>
+
+      <!-- Lumen (blood channel) -->
+      <div class="artery-lumen">
+        <!-- Blood cells -->
+        <div class="cell-track">
+          <div class="blood-cell" style="animation-delay: 0s;"></div>
+          <div class="blood-cell" style="animation-delay: -0.6s;"></div>
+          <div class="blood-cell" style="animation-delay: -1.2s;"></div>
+          <div class="blood-cell" style="animation-delay: -1.8s;"></div>
+          <div class="blood-cell" style="animation-delay: -2.4s;"></div>
+          <div class="blood-cell" style="animation-delay: -3.0s;"></div>
+          <div class="blood-cell offset" style="animation-delay: -0.3s;"></div>
+          <div class="blood-cell offset" style="animation-delay: -0.9s;"></div>
+          <div class="blood-cell offset" style="animation-delay: -1.5s;"></div>
+          <div class="blood-cell offset" style="animation-delay: -2.1s;"></div>
+          <div class="blood-cell offset" style="animation-delay: -2.7s;"></div>
+        </div>
+      </div>
+
+      <!-- Wall bottom -->
+      <div class="artery-wall bottom-wall"></div>
+    </div>
+
+    <!-- Pressure bar on right -->
+    <div class="pressure-bar-container">
+      <div class="pressure-bar-bg">
+        <div class="pressure-bar-fill"></div>
+      </div>
+      <div class="pressure-labels">
+        <span>SYS</span>
+        <span>DIA</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="artery-caption">
+    Each heartbeat sends a wave of pressure through your arteries. The vessel walls flex outward (systolic) then spring back (diastolic).
+  </p>
+</div>
+
+<style>
+  .artery-card {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 14px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    overflow: hidden;
+  }
+
+  .artery-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+  }
+
+  .artery-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .label-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-top: 3px;
+    flex-shrink: 0;
+  }
+
+  .systolic-dot { background: #f87171; box-shadow: 0 0 6px #f87171; }
+  .diastolic-dot { background: #60a5fa; box-shadow: 0 0 6px #60a5fa; }
+
+  .label-name {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #e2e8f0;
+  }
+
+  .label-desc {
+    font-size: 0.65rem;
+    color: #64748b;
+    line-height: 1.4;
+  }
+
+  .artery-scene {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .pressure-wave {
+    position: absolute;
+    left: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(248,113,113,0.4) 0%, transparent 70%);
+    animation: pulse-wave 1.4s ease-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes pulse-wave {
+    0% { transform: translateY(-50%) scale(0.5); opacity: 0.8; }
+    100% { transform: translateY(-50%) scale(3); opacity: 0; }
+  }
+
+  .artery-tube {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .artery-wall {
+    height: 14px;
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #7c3aed 100%);
+    position: relative;
+    transition: height 0.15s ease;
+    animation: wall-pulse 1.4s ease-in-out infinite;
+  }
+
+  .top-wall {
+    border-radius: 8px 8px 0 0;
+    transform-origin: bottom center;
+  }
+
+  .bottom-wall {
+    border-radius: 0 0 8px 8px;
+    transform-origin: top center;
+  }
+
+  @keyframes wall-pulse {
+    0% { height: 12px; }
+    10% { height: 18px; } /* systolic — vessel expands */
+    40% { height: 10px; } /* diastolic — vessel contracts */
+    100% { height: 12px; }
+  }
+
+  .artery-lumen {
+    height: 56px;
+    background: linear-gradient(180deg, #1e0a0a 0%, #7f1d1d 30%, #991b1b 50%, #7f1d1d 70%, #1e0a0a 100%);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .cell-track {
+    position: absolute;
+    inset: 0;
+  }
+
+  .blood-cell {
+    position: absolute;
+    width: 18px;
+    height: 14px;
+    background: radial-gradient(ellipse, #ef4444, #b91c1c);
+    border-radius: 50%;
+    top: 50%;
+    margin-top: -7px;
+    animation: flow-cell 2.8s linear infinite;
+    box-shadow: inset 0 2px 4px rgba(255,255,255,0.1);
+  }
+
+  .blood-cell.offset {
+    margin-top: 8px;
+  }
+
+  @keyframes flow-cell {
+    from { left: 110%; }
+    to { left: -10%; }
+  }
+
+  .pressure-bar-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    width: 28px;
+    flex-shrink: 0;
+  }
+
+  .pressure-bar-bg {
+    width: 12px;
+    height: 80px;
+    background: #1e293b;
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: flex-end;
+  }
+
+  .pressure-bar-fill {
+    width: 100%;
+    background: linear-gradient(to top, #60a5fa, #f87171);
+    border-radius: 6px;
+    animation: pressure-fill 1.4s ease-in-out infinite;
+  }
+
+  @keyframes pressure-fill {
+    0% { height: 45%; }
+    10% { height: 90%; } /* systolic peak */
+    40% { height: 40%; } /* diastolic trough */
+    100% { height: 45%; }
+  }
+
+  .pressure-labels {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 0.5rem;
+    color: #475569;
+    gap: 0.1rem;
+    text-align: center;
+    line-height: 1;
+  }
+
+  .artery-caption {
+    font-size: 0.78rem;
+    color: #64748b;
+    line-height: 1.6;
+    margin: 1.25rem 0 0;
+    text-align: center;
+  }
+</style>

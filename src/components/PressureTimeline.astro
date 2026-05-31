@@ -1,0 +1,191 @@
+---
+const milestones = [
+  {
+    year: "~2000 BCE",
+    era: "ancient",
+    title: "The Pulse as Oracle",
+    detail:
+      "Ancient Egyptian physicians recorded that the heart \"speaks\" from every vessel in the body. They associated the pulse with life force — but had no concept of pressure.",
+  },
+  {
+    year: "~450 BCE",
+    era: "ancient",
+    title: "Arteries vs. Veins",
+    detail:
+      "Greek physician Praxagoras distinguished arteries from veins, believing arteries carried pneuma (air) rather than blood. The word \"artery\" derives from the Greek for air-carrier.",
+  },
+  {
+    year: "1628",
+    era: "renaissance",
+    title: "Harvey Maps the Circulation",
+    detail:
+      "William Harvey published De Motu Cordis, proving blood circulates in a closed loop driven by the heart. This was the foundational insight that made blood pressure measurable in principle.",
+  },
+  {
+    year: "1733",
+    era: "enlightenment",
+    title: "The First Measurement",
+    detail:
+      "Stephen Hales inserted a brass pipe into a horse's left femoral artery, connected to a glass tube. Blood rose to 8 feet 3 inches — the first direct measurement of blood pressure in history.",
+  },
+  {
+    year: "1847",
+    era: "industrial",
+    title: "The Kymograph",
+    detail:
+      "Carl Ludwig invented the kymograph, a rotating drum that recorded blood pressure as a continuous wave. For the first time, the heartbeat could be read like a graph.",
+  },
+  {
+    year: "1881",
+    era: "industrial",
+    title: "First Non-Invasive Device",
+    detail:
+      "Samuel von Basch invented the first sphygmomanometer — a water-filled device pressed against the radial artery. It was clunky, but it didn't require cutting anyone open.",
+  },
+  {
+    year: "1896",
+    era: "industrial",
+    title: "Riva-Rocci's Cuff",
+    detail:
+      "Scipione Riva-Rocci designed the inflatable arm cuff and mercury column that we still recognize today. Harvey Cushing brought it to the USA in 1901 and it spread across hospitals worldwide.",
+  },
+  {
+    year: "1905",
+    era: "modern",
+    title: "Korotkoff Sounds",
+    detail:
+      "Russian physician Nikolai Korotkoff described the tapping sounds heard through a stethoscope as cuff pressure releases. These sounds define the systolic and diastolic numbers we report today.",
+  },
+  {
+    year: "1950s",
+    era: "modern",
+    title: "The First Drugs",
+    detail:
+      "Reserpine and hydralazine became the first antihypertensive medications. For the first time, high blood pressure was treatable — not just observable.",
+  },
+  {
+    year: "2010s",
+    era: "digital",
+    title: "Wrist & Wearable Monitoring",
+    detail:
+      "Consumer wearables began estimating blood pressure using photoplethysmography (PPG). While not as accurate as cuff devices, they democratized awareness of cardiovascular health.",
+  },
+];
+
+const eraColors = {
+  ancient: { dot: "#a78bfa", line: "rgba(167,139,250,0.3)", badge: "rgba(167,139,250,0.1)", text: "#c4b5fd" },
+  renaissance: { dot: "#60a5fa", line: "rgba(96,165,250,0.3)", badge: "rgba(96,165,250,0.1)", text: "#93c5fd" },
+  enlightenment: { dot: "#34d399", line: "rgba(52,211,153,0.3)", badge: "rgba(52,211,153,0.1)", text: "#6ee7b7" },
+  industrial: { dot: "#fbbf24", line: "rgba(251,191,36,0.3)", badge: "rgba(251,191,36,0.1)", text: "#fde68a" },
+  modern: { dot: "#f87171", line: "rgba(248,113,113,0.3)", badge: "rgba(248,113,113,0.1)", text: "#fca5a5" },
+  digital: { dot: "#38bdf8", line: "rgba(56,189,248,0.3)", badge: "rgba(56,189,248,0.1)", text: "#7dd3fc" },
+};
+---
+
+<div class="timeline-container">
+  <div class="timeline-line"></div>
+  {milestones.map((m, i) => {
+    const c = eraColors[m.era];
+    return (
+      <div class="milestone" style={`--dot-color: ${c.dot}; --line-color: ${c.line}; --badge-bg: ${c.badge}; --badge-text: ${c.text};`}>
+        <div class="milestone-dot"></div>
+        <div class="milestone-content">
+          <div class="milestone-year">{m.year}</div>
+          <h4 class="milestone-title">{m.title}</h4>
+          <p class="milestone-detail">{m.detail}</p>
+        </div>
+      </div>
+    );
+  })}
+</div>
+
+<style>
+  .timeline-container {
+    position: relative;
+    padding: 1rem 0 1rem 2.5rem;
+    margin: 2rem 0;
+  }
+
+  .timeline-line {
+    position: absolute;
+    left: 0.6rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      #a78bfa 5%,
+      #60a5fa 20%,
+      #34d399 35%,
+      #fbbf24 55%,
+      #f87171 75%,
+      #38bdf8 90%,
+      transparent
+    );
+    opacity: 0.4;
+  }
+
+  .milestone {
+    position: relative;
+    margin-bottom: 2rem;
+    padding-left: 1rem;
+  }
+
+  .milestone-dot {
+    position: absolute;
+    left: -2.1rem;
+    top: 0.2rem;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--dot-color);
+    box-shadow: 0 0 0 3px rgba(0,0,0,0.8), 0 0 0 5px var(--line-color);
+    transition: transform 0.2s;
+  }
+
+  .milestone:hover .milestone-dot {
+    transform: scale(1.3);
+  }
+
+  .milestone-content {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-left: 3px solid var(--dot-color);
+    border-radius: 0 10px 10px 0;
+    padding: 1rem 1.25rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .milestone:hover .milestone-content {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    border-left-color: var(--dot-color);
+  }
+
+  .milestone-year {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--badge-bg);
+    color: var(--badge-text);
+    margin-bottom: 0.4rem;
+  }
+
+  .milestone-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin: 0 0 0.4rem;
+    line-height: 1.3;
+  }
+
+  .milestone-detail {
+    font-size: 0.82rem;
+    color: #94a3b8;
+    line-height: 1.6;
+    margin: 0;
+  }
+</style>
