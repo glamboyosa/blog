@@ -1,0 +1,895 @@
+---
+title: "Your coding agent should open the browser before it says it’s done"
+description: "Why browser review belongs in the definition of done for user-facing frontend work."
+pubDate: "Sep 16 2026"
+heroImage: "/blog-placeholder-2.jpg"
+---
+
+I got tired of coding agents telling me frontend work was done when nobody had actually opened the frontend.
+
+You know the routine.
+
+The agent changes some code.
+
+Then:
+
+```text
+✓ format
+✓ typecheck
+✓ tests
+```
+
+And you get some version of:
+
+> Implemented and verified.
+
+Verified how?
+
+Because the test suite passed?
+
+That is useful evidence. It is not the same thing as opening the application and using the thing you just changed.
+
+I've had changes where all the code made sense and the tests passed, but the UI still had the sort of problem you notice in about three seconds as a human:
+
+* a control overlaps something else;
+* selected state exists internally but is not visibly highlighted;
+* reset works for one path but not another;
+* a filter updates state but leaves stale data rendered;
+* save appears to work until you refresh;
+* a map layer exists but is in the wrong order;
+* a modal technically opens but does not fit on the screen.
+
+The agent had tested the code.
+
+Nobody had tested the application.
+
+So I've started making browser review part of the definition of done for user-facing agent work.
+
+And Playwright MCP turns out to be a very good way to do it.
+
+## The missing loop in coding agents
+
+Most coding agents already have a reasonably good code feedback loop.
+
+They can:
+
+```text
+read code
+   ↓
+edit code
+   ↓
+run formatter
+   ↓
+run tests
+   ↓
+read failure
+   ↓
+edit again
+```
+
+That is one of the reasons they have become useful so quickly.
+
+They do not have to make one heroic attempt at a solution. They can interact with the repository, see what happened, and adjust.
+
+But for frontend work there is an obvious missing input:
+
+```text
+the actual frontend
+```
+
+The browser should be another thing the agent can interrogate.
+
+The loop I want looks more like:
+
+```text
+read task
+   ↓
+edit code
+   ↓
+run tests
+   ↓
+run application
+   ↓
+use changed feature
+   ↓
+inspect result
+   ↓
+something broken?
+   ↓
+fix it
+   ↓
+use it again
+```
+
+That last bit matters.
+
+Agents are very willing to tell you that a fix "should now work."
+
+I don't want "should."
+
+Open the thing again.
+
+## Playwright MCP makes the browser part of the toolchain
+
+I already use Playwright for E2E testing, but Playwright MCP is interesting for a slightly different reason.
+
+It gives the agent browser automation directly.
+
+The agent can navigate to the app, inspect the page, find controls, click them, fill inputs, inspect updated state, take screenshots, and work through a flow.
+
+Conceptually:
+
+```text
+Agent
+  ↓
+Open localhost
+  ↓
+Inspect page
+  ↓
+Click button
+  ↓
+Inspect state
+  ↓
+Change filter
+  ↓
+Inspect state again
+```
+
+This is different from telling the agent to run:
+
+```bash
+pnpm playwright test
+```
+
+Both are useful, but they answer different questions.
+
+The test suite answers:
+
+> Do the scenarios we already encoded still pass?
+
+Browser review asks:
+
+> Looking at this particular change, what should I go and verify in the application?
+
+That second question is much more exploratory.
+
+Suppose an agent refactors a collection of shared map-layer utilities.
+
+The tests may cover some of the helper behavior.
+
+But from the diff, the agent can also reason:
+
+> This code participates in initial rendering, selection, filtering and reset. I should try those flows.
+
+That is much closer to how I review my own frontend work.
+
+## Getting Playwright MCP running
+
+The basic MCP configuration is tiny:
+
+```json
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"]
+    }
+  }
+}
+```
+
+You need Node.js 20 or newer and an MCP-capable client.
+
+I use this kind of workflow with coding agents in my editor/CLI environment, but the idea is not specific to one agent product.
+
+Once Playwright MCP is connected, a useful sanity check is simply:
+
+```text
+Open the Playwright TodoMVC demo.
+
+Add a todo called "Browser QA".
+
+Verify it appears.
+```
+
+If the agent can do that, it has a browser.
+
+The more important question is what you tell it to do with one.
+
+## Giving an agent a browser is not enough
+
+An agent can have Playwright and still perform hilariously weak QA.
+
+For example:
+
+```text
+Opened /alerts.
+Page loaded successfully.
+Browser verification complete.
+```
+
+My brother in Christ, you looked at the page.
+
+That is not the same thing as testing the change.
+
+So I ended up formalizing browser review as its own procedure.
+
+The first rule is that the agent has to derive the review from the change.
+
+If it changed a filter, test the filter.
+
+If it changed reset logic, first change the state and then reset it.
+
+If it changed persistence, refresh the page.
+
+If it changed a modal, actually open and close the modal.
+
+If it changed responsive layout, change the viewport.
+
+That sounds obvious when a human says it out loud.
+
+It is much less obvious if your agent instructions simply say:
+
+> Verify the app works.
+
+## Start the real application
+
+Another rule I added: the agent should not assume how the project starts.
+
+I could write this into every repository:
+
+```text
+Run pnpm dev.
+```
+
+But then the rule stops being portable.
+
+Instead, my browser-review procedure tells the agent to inspect `package.json` and the repository's existing development setup.
+
+If it finds:
+
+```json
+{
+  "scripts": {
+    "dev": "nuxt dev"
+  }
+}
+```
+
+then great:
+
+```bash
+pnpm dev
+```
+
+If the repository documents another development command, use that.
+
+If the normal application cannot reasonably run and the repo already has a supported Docker development setup, that can be the fallback.
+
+My preference is:
+
+```text
+package.json dev script
+        ↓
+documented local setup
+        ↓
+existing Docker setup
+```
+
+What I do **not** want is the agent changing the app just so the app becomes easier to test.
+
+No temporary auth bypass.
+
+No new fake server.
+
+No replacing `.env`.
+
+No hard-coded development route that exists only because the agent could not work out the real setup.
+
+The browser review is supposed to exercise the software I am actually building.
+
+## What I mean by browser review
+
+A real example is easier.
+
+Imagine a dashboard where the same map-layer behavior participates in:
+
+* initial rendering;
+* selecting a feature;
+* changing a date filter;
+* resetting the map;
+* highlighting another type of record.
+
+If an agent refactors the shared rendering code, a reasonable browser review could be:
+
+```text
+Load page
+   ↓
+Confirm initial polygons render
+   ↓
+Select a feature
+   ↓
+Confirm visible highlight
+   ↓
+Change date filter
+   ↓
+Confirm rendered data changes
+   ↓
+Reset map
+   ↓
+Confirm original state returns
+```
+
+The reset step is the interesting one.
+
+This:
+
+> I clicked Reset and it didn't throw.
+
+isn't enough.
+
+The behavior is not "button accepts click."
+
+The behavior is "reset restores the expected state."
+
+Likewise:
+
+```text
+Save button works
+```
+
+is not the same claim as:
+
+```text
+Change setting
+   ↓
+Save
+   ↓
+Refresh
+   ↓
+Setting is still correct
+```
+
+I try to make the agent verify end behavior rather than mere interaction.
+
+## Screenshots are useful, but they aren't proof of everything
+
+I also ended up drawing a line between functional and visual verification.
+
+If I want to know:
+
+> Did the URL change to the correct value?
+
+I would rather have the agent inspect the URL than stare at a screenshot.
+
+If I want to know:
+
+> Is the Save button disabled?
+
+Inspect the element state.
+
+If I want to know:
+
+> Did the dialog open?
+
+Inspect browser state.
+
+But if I want to know:
+
+> Is the dialog clipped?
+
+Now a screenshot or rendered-page inspection becomes useful.
+
+Same for:
+
+* overlap;
+* spacing;
+* alignment;
+* z-index problems;
+* text wrapping;
+* responsive layout;
+* map sizing.
+
+So roughly:
+
+```text
+Functional question
+    ↓
+DOM / accessibility / browser state
+
+Visual question
+    ↓
+rendered page / screenshot
+```
+
+Sometimes you need both.
+
+A modal can exist perfectly happily in the DOM while being completely unusable visually.
+
+## Check the console while you're there
+
+One slightly annoying class of frontend bug is:
+
+> Everything looks fine, but the browser is screaming.
+
+If the agent is already operating the page, it may as well inspect relevant runtime errors.
+
+I say **relevant** because I do not want every review derailed by a warning that has existed on `main` for six months.
+
+The useful question is:
+
+> Did this flow introduce a new relevant console error?
+
+Same idea for network behavior.
+
+If I just changed a client-only transition, I probably don't need a forensic network audit.
+
+If the UI change depends on an API request, then yes, I want to know if the supposedly successful action produced a `500`.
+
+Scope the QA to the change.
+
+## Then I needed somewhere to put all these instructions
+
+My first instinct was naturally to keep stuffing more things into `AGENTS.md`.
+
+That file already contained the important rules my coding agents should know:
+
+* how the repository is structured;
+* coding conventions;
+* testing philosophy;
+* don't commit for me;
+* keep changes surgical;
+* don't add nonsense comments;
+* project-specific rules.
+
+Then I was about to add another hundred lines covering:
+
+* how to start the app;
+* browser setup;
+* what to click;
+* functional vs visual testing;
+* responsive testing;
+* screenshots;
+* console errors;
+* teardown.
+
+At some point `AGENTS.md` stops being instructions and starts becoming a small religious text.
+
+The distinction I settled on is:
+
+> `AGENTS.md` is the constitution. Skills are the playbooks.
+
+So my repository looks more like:
+
+```text
+/
+├── AGENTS.md
+└── .agents/
+    └── skills/
+        ├── browser-review/
+        │   └── SKILL.md
+        ├── pr-review/
+        │   └── SKILL.md
+        └── grill-me/
+            └── SKILL.md
+```
+
+The root instructions say browser review is mandatory for user-visible work.
+
+The browser skill contains the detailed procedure.
+
+That feels much cleaner.
+
+## The `AGENTS.md` rule is actually pretty small
+
+You do not need to dump the whole browser procedure into your root instructions.
+
+Something like this is enough:
+
+```md
+## Browser Verification
+
+User-visible work is not complete until the affected behavior has been
+verified in the running application.
+
+Playwright MCP is available for browser verification.
+
+For user-visible changes, follow:
+
+`.agents/skills/browser-review/SKILL.md`
+
+A successful build, type check, unit test suite, or E2E test suite does
+not replace browser verification.
+
+Do not commit browser-verification artifacts.
+
+Stop resources started for verification and clean up temporary artifacts
+before hand-off.
+```
+
+The rule is always visible.
+
+The procedure is loaded when it is needed.
+
+## The browser-review skill I ended up with
+
+Here is a shortened but usable version of the skill.
+
+````md
+---
+name: browser-review
+description: Verify user-visible changes in the running application with Playwright MCP.
+---
+
+# Browser Review
+
+User-visible work is not complete until the affected behavior has been
+verified in the running application.
+
+## Before verification
+
+Run:
+
+```bash
+git status --short
+````
+
+Remember which files already existed.
+
+Do not delete or modify pre-existing user work.
+
+Read the task and relevant diff.
+
+Identify:
+
+* affected routes;
+* changed user flow;
+* relevant loading, empty, error, selected, or disabled states;
+* persistence and refresh behavior;
+* nearby behavior that can reasonably regress.
+
+## Start the application
+
+Inspect `package.json` and repository documentation.
+
+Prefer:
+
+1. the repository's normal development script;
+2. its documented local-development command;
+3. its existing Docker setup as a fallback.
+
+Do not invent a new startup configuration only for browser verification.
+
+Do not modify application behavior to make browser QA easier.
+
+Wait until the application is ready.
+
+Record the processes and containers you start.
+
+## Exercise the affected UI
+
+Use Playwright MCP to open the running application.
+
+Do not stop after confirming that the page loads.
+
+Exercise the complete changed user flow.
+
+Verify the final result.
+
+Where relevant, check:
+
+* navigation;
+* forms;
+* menus and dialogs;
+* selected state;
+* filtering;
+* reset behavior;
+* loading;
+* errors;
+* persistence after refresh;
+* URL-backed state.
+
+## Functional vs visual verification
+
+Use browser or DOM state for functional claims.
+
+Examples:
+
+* text changed;
+* URL changed;
+* control became disabled;
+* dialog opened;
+* record persisted.
+
+Use screenshots for visual claims.
+
+Examples:
+
+* overlap;
+* clipping;
+* spacing;
+* stacking;
+* responsive behavior.
+
+Use both when necessary.
+
+## Console and network
+
+Check for new relevant browser errors.
+
+When the feature depends on API requests, inspect relevant failed or
+obviously incorrect requests.
+
+Do not report unrelated existing warnings as regressions.
+
+## Fix and repeat
+
+If verification finds a defect:
+
+1. fix the smallest relevant cause;
+2. rerun affected automated tests;
+3. repeat the browser flow.
+
+Do not assume the fix works without exercising the behavior again.
+
+## Cleanup
+
+Teardown is mandatory even if verification fails.
+
+Close browser resources started by the agent.
+
+Stop development servers and Docker resources started by the agent.
+
+Remove temporary screenshots, traces, reports, downloads, browser state,
+and other verification artifacts created by the agent.
+
+Only stop or remove resources the agent created.
+
+Run:
+
+```bash
+git status --short
+```
+
+before hand-off.
+
+Do not run `git add`, `git commit`, or `git push`.
+
+## Report
+
+State:
+
+* routes tested;
+* interactions exercised;
+* important states checked;
+* relevant console errors;
+* automated tests run;
+* issues found and fixed.
+
+If browser verification could not be completed, say why.
+
+````
+
+Nothing there is particularly magical.
+
+The value is in making it the default expectation instead of relying on the agent to spontaneously decide that it should use the browser.
+
+## The agent that wrote it should test it
+
+My implementation workflow now basically looks like:
+
+```text
+plan
+   ↓
+implement
+   ↓
+automated tests
+   ↓
+browser review
+   ↓
+fix
+   ↓
+browser review again
+   ↓
+hand off
+````
+
+There is one downside.
+
+The agent that wrote the solution is also the agent deciding whether its solution works.
+
+That is still useful. I test my own code too.
+
+But it means the agent begins verification with an existing theory of the implementation.
+
+So for code review I take it one step further.
+
+## The review agent shouldn't trust the author agent
+
+If another agent reviews the branch, I want it to derive the browser test scope independently.
+
+Not:
+
+> The author says they tested initial rendering, filtering and reset. Please verify those screenshots.
+
+Instead:
+
+```text
+Read requirement
+    ↓
+Read diff
+    ↓
+Ask what behavior this code can affect
+    ↓
+Test those flows yourself
+```
+
+I now add instructions along the lines of:
+
+```md
+For user-visible changes, follow
+`.agents/skills/browser-review/SKILL.md`.
+
+Do not rely on the implementation author's screenshots, QA notes, or
+passing tests as proof.
+
+Derive the verification scope independently from the task and diff.
+```
+
+That gives me:
+
+```text
+Author agent
+    ↓
+self-review + browser QA
+
+Reviewer agent
+    ↓
+independent diff review + browser QA
+```
+
+It is still software development. Bugs can get through.
+
+But the second pass has a chance to challenge the assumptions of the first one instead of merely reading its homework.
+
+## Cleanup sounds boring until an agent kills your other dev server
+
+Once agents can launch servers and browsers, cleanup becomes part of agent design.
+
+Otherwise every coding session leaves a little archaeological layer behind:
+
+```text
+node process
+chromium process
+random screenshot
+playwright trace
+downloaded file
+temporary auth state
+docker container
+```
+
+So teardown is mandatory in my workflow.
+
+But "clean everything" is dangerous.
+
+This:
+
+```bash
+pkill node
+```
+
+is not cleanup.
+
+That's an agent going on a small rampage.
+
+It might kill the development server I started in another terminal.
+
+Likewise:
+
+```bash
+git clean -fd
+```
+
+could happily delete an untracked file that has nothing to do with the agent.
+
+The safer rule is simple:
+
+> Clean up only the resources you created.
+
+If the agent starts the dev server, remember that process.
+
+If it starts Docker, remember those containers.
+
+If it creates screenshots, remove those screenshots.
+
+If the resource was already there, leave it alone.
+
+I also have the agent look at:
+
+```bash
+git status --short
+```
+
+before and after browser review.
+
+Browser QA should not quietly turn into files in my next commit.
+
+## I don't think every task needs this
+
+There is a risk with any useful engineering practice that it becomes ceremony.
+
+I don't need Playwright to tell me that a Markdown typo was fixed.
+
+I probably don't need to open Chromium for an isolated backend refactor that cannot affect rendered behavior.
+
+I do want it for things such as:
+
+* components;
+* forms;
+* navigation;
+* dialogs;
+* client-side state;
+* maps;
+* filtering;
+* responsive layout;
+* persistence;
+* user-visible bug fixes.
+
+My rule is basically:
+
+> If you're claiming something about runtime UI behavior, runtime UI should be part of the evidence.
+
+That is enough.
+
+## Where I've landed
+
+I started this by wanting agents to stop saying "works" when they had never looked at the application.
+
+It ended up changing how I think about the whole agent workflow.
+
+There are at least three distinct stages:
+
+```text
+Write the change
+      ↓
+Prove known behavior with tests
+      ↓
+Use the changed software
+```
+
+And then, for changes that matter enough:
+
+```text
+Independent reviewer
+      ↓
+Derive its own failure modes
+      ↓
+Use the software again
+```
+
+The browser does not replace good tests.
+
+It does not replace code review.
+
+And it definitely does not mean I no longer look at important changes myself.
+
+It adds a missing feedback loop.
+
+The coding agent already has access to the repository.
+
+It already has the shell.
+
+It already knows what it changed.
+
+Giving it a browser means it can finally answer a more useful question than:
+
+> Does my code look correct?
+
+It can start answering:
+
+> Does the thing I just built actually work?
+
+That is the behavior I want to normalize.
+
+If an agent is capable of writing the button, it is reasonable to ask it to click the thing before it tells you the job is done.
+
