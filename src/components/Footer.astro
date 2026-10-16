@@ -3,7 +3,7 @@ const today = new Date();
 ---
 
 <footer>
-  &copy; {today.getFullYear()} Timothy Ogbemudia. All rights reserved.
+  &copy; {today.getFullYear()} <a class="owner" href="https://glamboyosa.xyz" target="_blank" rel="noopener noreferrer">Timothy Ogbemudia</a>. All rights reserved.
   <div class="social-links">
     <a href="https://github.com/glamboyosa" target="_blank">
       <svg
@@ -26,6 +26,16 @@ const today = new Date();
     background: linear-gradient(var(--gray-gradient)) no-repeat;
     color: rgb(var(--gray));
     text-align: center;
+  }
+  .owner {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: rgba(var(--gray), 0.4);
+    text-underline-offset: 3px;
+  }
+  .owner:hover {
+    color: rgb(var(--gray-dark));
+    text-decoration-color: currentColor;
   }
   .social-links {
     display: flex;
