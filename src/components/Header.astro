@@ -21,42 +21,44 @@ import { SITE_TITLE } from "../consts";
 </header>
 <style>
   header {
-    margin: 0;
-    padding: 0 1em;
-    background: white;
-    box-shadow: 0 2px 8px rgba(var(--black), 5%);
-  }
-  h2 {
-    margin: 0;
-    font-size: 1em;
-  }
-
-  h2 a,
-  h2 a.active {
-    text-decoration: none;
+    padding-top: 16px;
   }
   nav {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    min-height: 56px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.13);
   }
-  nav a {
-    padding: 1em 0.5em;
-    color: var(--black);
-    border-bottom: 4px solid transparent;
+  h2 {
+    margin: 0;
+    font-size: 15px;
+    letter-spacing: -0.02em;
+  }
+  h2 a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    color: rgb(var(--black));
     text-decoration: none;
   }
-  nav a.active {
-    text-decoration: none;
-    border-bottom-color: var(--accent);
-  }
-  .social-links,
   .social-links a {
-    display: flex;
+    display: grid;
+    width: 44px;
+    height: 44px;
+    margin-right: -12px;
+    place-items: center;
+    color: rgb(var(--gray));
+    transition: color 150ms ease-out;
   }
-  @media (max-width: 720px) {
-    .social-links {
-      display: none;
+  .social-links svg {
+    width: 20px;
+    height: 20px;
+  }
+  @media (hover: hover) {
+    h2 a:hover,
+    .social-links a:hover {
+      color: var(--accent-dark);
     }
   }
 </style>
