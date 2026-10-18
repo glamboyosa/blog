@@ -5,6 +5,7 @@ import Footer from "../components/Footer.astro";
 import { SITE_TITLE, SITE_DESCRIPTION } from "../consts";
 import { getCollection, CollectionEntry } from "astro:content";
 import FormattedDate from "../components/FormattedDate.astro";
+import { getReadingMinutes } from "../utils/readingTime";
 
 const posts = (await getCollection("blog")).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
@@ -40,7 +41,7 @@ const posts = (await getCollection("blog")).sort(
                 <div class="post-card-meta">
                   <FormattedDate date={post.data.pubDate} />
                   <span aria-hidden="true">·</span>
-                  <span>5 min read</span>
+                  <span>{getReadingMinutes(post.body)} min read</span>
                 </div>
                 <h3>{post.data.title}</h3>
                 <p>{post.data.description}</p>
